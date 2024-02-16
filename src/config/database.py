@@ -1,16 +1,21 @@
-import os
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
+import asyncpg
 import sqlalchemy
-from database import Database
+from src.config.settings import DB_HOST, DB_NAME, DB_SECRET, DB_USERNAME
+from starlette.applications import Starlette
 
 metadata = sqlalchemy.MetaData()
-DATABASE_URL = os.environ["DATABASE_URL"]
 
 
-def get_db():
-    database = Database(DATABASE_URL)
-
-    try:
-        yield database.connect()
-    finally:
-        database.disconnect()
+@asynccontextmanager
+async def lifespan(app: Starlette) -> AsyncGenerator:
+    connection = await asyncpg.connect(
+        user=DB_USERNAME,
+        password=DB_SECRET,
+        database=DB_NAME,
+        host=DB_HOST,
+    )
+    yield
+    await connection.close()
