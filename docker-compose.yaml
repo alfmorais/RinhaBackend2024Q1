@@ -1,9 +1,10 @@
 version: "3.9"
 
 services:
-  api1: &api
+  web1: &web
     build: .
-    hostname: api01
+    command: bash -c "./wait-for-it.sh db:5432 && uvicorn src.application:app --port 8080"
+    hostname: web01
     ports:
       - "8081:8080"
     volumes:
@@ -25,8 +26,8 @@ services:
           cpus: "0.5"
           memory: "180MB"
 
-  api2:
-    <<: *api
+  web2:
+    <<: *web
     hostname: api02
     ports:
       - "8082:8080"
@@ -36,8 +37,8 @@ services:
     ports:
       - "9999:9999"
     depends_on:
-      - api1
-      - api2
+      - web1
+      - web2
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     deploy:
@@ -52,6 +53,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     env_file:
       - ./.env
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
