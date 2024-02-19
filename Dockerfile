@@ -15,8 +15,6 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /code/.
-EXPOSE 8000
+EXPOSE 80
 
 RUN chmod +x wait-for-it.sh
-
-CMD ["uvicorn", "src.application:app"]
