@@ -79,7 +79,7 @@ class TransactionsController:
     ) -> str:
         query = """
             UPDATE Clientes
-            SET saldo_inicial = {}
+            SET saldo = {}
             WHERE id = {};
         """.format(
             new_customer_balance,
@@ -109,7 +109,7 @@ class TransactionsController:
         """
         transaction_amount = validated_payload["amount"]
         customer_limit = customer["limite"]
-        customer_balance = customer["saldo_inicial"]
+        customer_balance = customer["saldo"]
         new_customer_balance = customer_balance - transaction_amount
 
         condition = await self.condition_to_not_create_transaction(
@@ -154,7 +154,7 @@ class TransactionsController:
         Um débito (D) aumenta o saldo de um ativo e de uma conta de despesas.
         """
         transaction_amount = validated_payload["amount"]
-        customer_balance = customer["saldo_inicial"]
+        customer_balance = customer["saldo"]
         customer_limit = customer["limite"]
         new_customer_balance = customer_balance + transaction_amount
 
