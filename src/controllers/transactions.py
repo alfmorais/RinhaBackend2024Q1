@@ -1,13 +1,11 @@
 import json
 from typing import Awaitable, Dict
 
-import asyncpg
 from pydantic_core import ValidationError
 from src.config.exceptions import (
     NotFoundCustomerException,
     TransactionCreateExecption,
 )
-from src.config.settings import DB_HOST, DB_NAME, DB_SECRET, DB_USERNAME
 from src.schemas.transactions import Transactions
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_200_OK
@@ -182,33 +180,28 @@ class TransactionsController:
         )
         return response
 
-    async def handle(self, payload: Dict, customer_id: str) -> Dict:
-        validated_payload = await self.validate_payload(payload)
+    async def handle(self, payload: Dict, customer_id: str, request) -> Dict:
+        async with request.app.state.pool.acquire() as conn:
+            validated_payload = await self.validate_payload(payload)
 
-        connection = await asyncpg.connect(
-            user=DB_USERNAME,
-            password=DB_SECRET,
-            database=DB_NAME,
-            host=DB_HOST,
-        )
-        customer = await self.retrieve_customer_from_database(
-            connection,
-            customer_id,
-        )
+            customer = await self.retrieve_customer_from_database(
+                conn,
+                customer_id,
+            )
 
-        type_operation = validated_payload["type"]
-        operation = {
-            "c": self.credit_operation,
-            "d": self.debit_operation,
-        }
+            type_operation = validated_payload["type"]
+            operation = {
+                "c": self.credit_operation,
+                "d": self.debit_operation,
+            }
 
-        response = await operation[type_operation](
-            connection,
-            validated_payload,
-            customer,
-        )
+            response = await operation[type_operation](
+                conn,
+                validated_payload,
+                customer,
+            )
 
-        return JSONResponse(
-            content=response,
-            status_code=HTTP_200_OK,
-        )
+            return JSONResponse(
+                content=response,
+                status_code=HTTP_200_OK,
+            )

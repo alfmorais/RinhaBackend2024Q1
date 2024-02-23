@@ -9,5 +9,5 @@ class CustomersTransactions(HTTPEndpoint):
         payload = await request.json()
 
         controller = TransactionsController()
-        response = await controller.handle(payload, customer_id)
+        response = await controller.handle(payload, customer_id, request)
         return response
