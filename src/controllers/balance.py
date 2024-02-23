@@ -1,9 +1,7 @@
 from datetime import datetime
 from typing import Awaitable, Dict
 
-import asyncpg
 from src.config.exceptions import NotFoundCustomerException
-from src.config.settings import DB_HOST, DB_NAME, DB_SECRET, DB_USERNAME
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_200_OK
 
@@ -61,25 +59,20 @@ class BalanceController:
         }
         return response
 
-    async def handle(self, customer_id):
-        connection = await asyncpg.connect(
-            user=DB_USERNAME,
-            password=DB_SECRET,
-            database=DB_NAME,
-            host=DB_HOST,
-        )
-        customer = await self.retrieve_customer_from_database(
-            connection,
-            customer_id,
-        )
-        transactions = await self.retrive_transactions_from_database(
-            connection,
-            customer_id,
-        )
+    async def handle(self, customer_id, request):
+        async with request.app.state.pool.acquire() as conn:
+            customer = await self.retrieve_customer_from_database(
+                conn,
+                customer_id,
+            )
+            transactions = await self.retrive_transactions_from_database(
+                conn,
+                customer_id,
+            )
 
-        response = await self.response(customer, transactions)
+            response = await self.response(customer, transactions)
 
-        return JSONResponse(
-            content=response,
-            status_code=HTTP_200_OK,
-        )
+            return JSONResponse(
+                content=response,
+                status_code=HTTP_200_OK,
+            )
