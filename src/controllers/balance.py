@@ -39,32 +39,25 @@ class BalanceController:
         if transactions is None:
             return []
 
-        response = [dict(transaction) for transaction in transactions]
+        response = [
+            {
+                "valor": transaction["valor"],
+                "tipo": transaction["tipo"],
+                "descricao": transaction["descricao"],
+                "realizada_em": transaction["realizada_em"].isoformat(),
+            }
+            for transaction in transactions
+        ]
         return response
 
     async def response(self, customer, transactions):
-        transactions_data = None
-
-        if len(transactions) == 0:
-            transactions_data = []
-        else:
-            transactions_data = [
-                {
-                    "valor": transaction["valor"],
-                    "tipo": transaction["tipo"],
-                    "descricao": transaction["descricao"],
-                    "realizada_em": transaction["realizada_em"].isoformat(),
-                }
-                for transaction in transactions
-            ]
-
         response = {
             "saldo": {
                 "total": customer["saldo"],
                 "data_extrato": datetime.now().isoformat(),
                 "limite": customer["limite"],
             },
-            "ultimas_transacoes": transactions_data,
+            "ultimas_transacoes": transactions,
         }
         return response
 
