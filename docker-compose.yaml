@@ -24,7 +24,7 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: "180MB"
+          memory: "100MB"
 
   api2:
     <<: *api
@@ -46,7 +46,7 @@ services:
       resources:
         limits:
           cpus: "0.15"
-          memory: "50MB"
+          memory: "10MB"
 
   db:
     image: postgres:13-alpine
@@ -64,7 +64,7 @@ services:
       resources:
         limits:
           cpus: "0.35"
-          memory: "270MB"
+          memory: "340MB"
 
 volumes:
   postgres_data:
