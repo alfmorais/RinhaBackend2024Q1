@@ -60,7 +60,7 @@ class BalanceController:
         return response
 
     async def handle(self, customer_id, request):
-        async with request.app.state.pool.acquire() as conn:
+        async with request.app.state.pool.acquire() as conn, conn.transaction():
             customer = await self.retrieve_customer_from_database(
                 conn,
                 customer_id,

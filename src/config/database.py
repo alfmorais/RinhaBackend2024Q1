@@ -20,7 +20,7 @@ async def lifespan(app: Starlette) -> AsyncGenerator:
         host=DB_HOST,
         statement_cache_size=0,
         min_size=1,
-        max_size=5,
+        max_size=2,
         max_inactive_connection_lifetime=300,
         timeout=10,
     )
@@ -32,7 +32,7 @@ async def lifespan(app: Starlette) -> AsyncGenerator:
     timeout: Timeout em segundos para operações de banco de dados
     """
 
-    async with app.state.pool.acquire() as conn:
+    async with app.state.pool.acquire() as conn, conn.transaction():
         for command in customer_database_commands:
             await conn.execute(command)
 

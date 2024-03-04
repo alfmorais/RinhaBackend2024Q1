@@ -44,17 +44,6 @@ class TransactionsController:
 
         return dict(customer)
 
-    async def condition_to_not_create_transaction(
-        self,
-        new_customer_balance: int,
-        customer_limit: int,
-    ) -> bool:
-        if new_customer_balance < 0:
-            balance = new_customer_balance * (-1)
-            return balance > customer_limit
-
-        return False
-
     async def query_create_transaction(
         self,
         transaction_amount: int,
@@ -101,14 +90,11 @@ class TransactionsController:
         transaction_amount = validated_payload["amount"]
         customer_limit = customer["limite"]
         customer_balance = customer["saldo"]
-        new_customer_balance = customer_balance - transaction_amount
+        new_customer_balance = customer_balance + transaction_amount
 
-        condition = await self.condition_to_not_create_transaction(
-            new_customer_balance,
-            customer_limit,
-        )
+        is_valid_credit_operation_request = new_customer_balance < -customer_limit
 
-        if condition:
+        if is_valid_credit_operation_request:
             raise TransactionCreateExecption
 
         transaction_type = validated_payload["type"]
@@ -147,7 +133,12 @@ class TransactionsController:
         transaction_amount = validated_payload["amount"]
         customer_balance = customer["saldo"]
         customer_limit = customer["limite"]
-        new_customer_balance = customer_balance + transaction_amount
+        new_customer_balance = customer_balance - transaction_amount
+
+        is_valid_credit_operation_request = new_customer_balance < -customer_limit
+
+        if is_valid_credit_operation_request:
+            raise TransactionCreateExecption
 
         transaction_type = validated_payload["type"]
         transaction_description = validated_payload["description"]
@@ -174,7 +165,7 @@ class TransactionsController:
         return response
 
     async def handle(self, payload: Dict, customer_id: str, request) -> Dict:
-        async with request.app.state.pool.acquire() as conn:
+        async with request.app.state.pool.acquire() as conn, conn.transaction():
             validated_payload = await self.validate_payload(payload)
 
             customer = await self.retrieve_customer_from_database(
