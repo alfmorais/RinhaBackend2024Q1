@@ -13,13 +13,24 @@ metadata = sqlalchemy.MetaData()
 
 @asynccontextmanager
 async def lifespan(app: Starlette) -> AsyncGenerator:
-    pool = await asyncpg.create_pool(
+    app.state.pool = await asyncpg.create_pool(
         user=DB_USERNAME,
         password=DB_SECRET,
         database=DB_NAME,
         host=DB_HOST,
+        statement_cache_size=0,
+        min_size=1,
+        max_size=5,
+        max_inactive_connection_lifetime=300,
+        timeout=10,
     )
-    app.state.pool = pool
+    """
+    statement_cache_size: Evita problemas de statement caching
+    min_size: Número mínimo de conexões no pool
+    max_size: Número máximo de conexões no pool
+    max_inactive_connection_lifetime: Tempo máximo em segundos para uma conexão ficar inativa
+    timeout: Timeout em segundos para operações de banco de dados
+    """
 
     async with app.state.pool.acquire() as conn:
         for command in customer_database_commands:
@@ -31,4 +42,4 @@ async def lifespan(app: Starlette) -> AsyncGenerator:
     try:
         yield
     finally:
-        await pool.close()
+        await app.state.pool.close()

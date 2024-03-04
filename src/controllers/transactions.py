@@ -14,6 +14,10 @@ from starlette.status import HTTP_200_OK
 class TransactionsController:
     def __init__(self, validate_class: Transactions = Transactions) -> None:
         self.validate_class = validate_class
+        self.operation = {
+            "c": self.credit_operation,
+            "d": self.debit_operation,
+        }
 
     async def validate_payload(self, payload: Dict) -> Dict | ValidationError:
         try:
@@ -85,17 +89,6 @@ class TransactionsController:
         )
         return query
 
-    async def response(
-        self,
-        customer_limit: int,
-        new_customer_balance: int,
-    ) -> Dict:
-        response = {
-            "limite": customer_limit,
-            "saldo": new_customer_balance,
-        }
-        return response
-
     async def credit_operation(
         self,
         connection: Awaitable,
@@ -136,10 +129,10 @@ class TransactionsController:
         )
         await connection.execute(query_update_customer)
 
-        response = await self.response(
-            customer_limit,
-            new_customer_balance,
-        )
+        response = {
+            "limite": customer_limit,
+            "saldo": new_customer_balance,
+        }
         return response
 
     async def debit_operation(
@@ -174,10 +167,10 @@ class TransactionsController:
         )
         await connection.execute(query_update_customer)
 
-        response = await self.response(
-            customer_limit,
-            new_customer_balance,
-        )
+        response = {
+            "limite": customer_limit,
+            "saldo": new_customer_balance,
+        }
         return response
 
     async def handle(self, payload: Dict, customer_id: str, request) -> Dict:
@@ -190,12 +183,8 @@ class TransactionsController:
             )
 
             type_operation = validated_payload["type"]
-            operation = {
-                "c": self.credit_operation,
-                "d": self.debit_operation,
-            }
 
-            response = await operation[type_operation](
+            response = await self.operation[type_operation](
                 conn,
                 validated_payload,
                 customer,

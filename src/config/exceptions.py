@@ -2,8 +2,11 @@ from pydantic_core import ValidationError
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND,
-                              HTTP_422_UNPROCESSABLE_ENTITY)
+from starlette.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+)
 
 
 class NotFoundCustomerException(Exception):
@@ -30,7 +33,7 @@ async def validation_error(
 ):
     return JSONResponse(
         content=exc.errors(),
-        status_code=HTTP_400_BAD_REQUEST,
+        status_code=HTTP_422_UNPROCESSABLE_ENTITY,
     )
 
 
@@ -55,7 +58,7 @@ async def transaction_create_exception(
 
 
 exception_handlers = {
-    HTTPException: json_exception,
+    # HTTPException: json_exception,
     ValidationError: validation_error,
     NotFoundCustomerException: not_found_customer_exception,
     TransactionCreateExecption: transaction_create_exception,

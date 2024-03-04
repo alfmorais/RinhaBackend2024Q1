@@ -13,7 +13,6 @@ routes = [
 ]
 
 app = Starlette(
-    debug=True,
     routes=routes,
     lifespan=lifespan,
     exception_handlers=exception_handlers,
